@@ -14,17 +14,16 @@ class SplitWords:
 
 	def seg_sentence(self):
 
-		sentence_seged = jieba.cut(self.content.strip())
-		outstr = ''
-		for word in sentence_seged:
+		res_list = jieba.cut(self.content.strip())  # strip() 方法用于移除字符串头尾指定的字符（默认为空格或换行符）或字符序列。
+		word_list = []
+		for word in res_list:
 			if word not in stopwords:
 				if word != '\t':
-					outstr += word
-					outstr += " "
-		return outstr
+					word_list.append(word)
+		return word_list
 
 	def get_word_list(self):
-		res_list = list(jieba.cut(self.content))  # 将分词结果转换为list
+		res_list = list(jieba.cut(self.content.strip()))  # 将分词结果转换为list
 		word_list = []
 		for i in res_list:
 			word_list.append(i)
