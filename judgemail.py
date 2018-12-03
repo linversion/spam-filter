@@ -27,7 +27,7 @@ class JudgeMail:
 		self.train_module.set_dic_word_freq()	# 开始训练模型
 
 	def judge(self):
-		mail_content = EmailParser(self.mail_file, self.is_given_mail).get_mail_content()	#获取邮件内容
+		mail_content = EmailParser(self.mail_file, self.is_given_mail).get_mail_content()	#获取邮件内容，得到str类型
 
 		res_list = SplitWords(mail_content).get_word_list()	# 将邮件分词得到一个list
 		word_list = list(set(res_list))	# 去除重复的词
@@ -43,13 +43,13 @@ class JudgeMail:
 			if word in self.train_module.dic_word_freq:	# 该词出现在模型中
 				p_w_n = self.train_module.dic_word_freq[word][0]  # 读取在正常邮件中的概率
 				p_w_s = self.train_module.dic_word_freq[word][1]  # 读取在垃圾邮件中的概率
-				p_s_w = p_w_s * self.P_SPAM / (p_w_s * self.P_SPAM + p_w_n * self.P_NORMAL)
+				p_s_w = p_w_s * self.P_SPAM / (p_w_s * self.P_SPAM + p_w_n * self.P_NORMAL)  # 该词的p(s|w)
 
 				word_freq.append((word, p_s_w))
 			else:
 				word_freq.append((word, self.P_SPAM_WORD))
 
-		word_freq_most = sorted(word_freq, key = lambda x:x[1], reverse=True)[:15]  # 取15个特征向量
+		word_freq_most = sorted(word_freq, key = lambda x:x[1], reverse=True)[:15]  # 取15个特征向量，取p(s|w)最大的15个
 
 		p = 1.0
 		rest_p = 1.0
@@ -60,7 +60,8 @@ class JudgeMail:
 
 		p_spam = 1 / (1 + k)
 		mail_type = ''
-		if p_spam > self.P_IS_SPAM_LIMIT:
+		
+		if p_spam > self.P_IS_SPAM_LIMIT:  # 后验概率大于0.9则为垃圾邮件
 			mail_type = 'spam'
 		else:
 			mail_type = 'normal'
