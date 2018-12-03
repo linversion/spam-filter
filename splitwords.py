@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import jieba
-
+import re
 filepath = '/home/linversion/Downloads/stopwords.dat.txt'
 stopwords = [line.strip() for line in open(filepath, 'r', encoding='utf-8').readlines()]
 
@@ -15,6 +15,7 @@ class SplitWords:
 	def seg_sentence(self):
 
 		res_list = jieba.cut(self.content.strip())  # strip() 方法用于移除字符串头尾指定的字符（默认为空格或换行符）或字符序列。
+		print(res_list)
 		word_list = []
 		for word in res_list:
 			if word not in stopwords:
@@ -32,13 +33,15 @@ class SplitWords:
 
 def main():
 	content = '''
-	毕业论文攻坚阶段，请保持手机畅通，经常查看邮件，随时和导师进行联系和沟通。随意，淡漠，不积极主动必定给自己的顺利毕业蒙上一层阴霾。
+	死亡天使（Azrael）是美国DC漫画旗下反英雄，初次登场于《蝙蝠侠：死亡天使的剑》（Batman: Sword of Azrael）第1期（1992年10月）。
+	本名尚-保罗·范雷（Jean-Paul Valley），是前哥谭市义警，作为一名有心理问题的英雄经常出现在各种事件当中。
 	'''
-	word_list = SplitWords(content).get_word_list()    # 类型为list
-	print(word_list)
-	print("stopwords class：", stopwords.__class__)
-	word_list2 = SplitWords(content).seg_sentence()
-	print("class:", word_list2.__class__, word_list2)
+	word_list = SplitWords(content).seg_sentence()    # 类型为list
+	print('1', word_list)
+	content2 = re.sub(u'[^\u4e00-\u9fa5]', '', content)
+	print(content2)
+	word_list2 = SplitWords(content2).seg_sentence()
+	print('2', word_list2)
 
 
 if __name__ == '__main__':
