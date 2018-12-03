@@ -6,7 +6,7 @@ import re
 import collections
 from splitwords import SplitWords
 #from splitwords_trie import SplitWords
-
+import sys
 
 class TrainModule:
 	"""
@@ -33,6 +33,7 @@ class TrainModule:
 			print('scanning directory: ', d)
 
 			for filename in os.listdir(d):
+				print('reading file: ', filename)
 				fp = open(d + filename).read()    #read() 方法用于从文件读取指定的字节数，如果未给定或为负则读取所有
 				mail_content = fp[fp.index('\n\n')::]
 
@@ -45,20 +46,20 @@ class TrainModule:
 
 				mail_content = re.sub('\s+', ' ', mail_content)    #re.sub用于替换字符串中的匹配项，将字符串中的一个或多个空格换成一个空格
 				print("main_content:", mail_content.__class__)
-				res_list = SplitWords(mail_content).get_word_list()    #邮件内容分词
+				res_list = SplitWords(mail_content).get_word_list()    #邮件内容分词得到一个list
 
-				word_list = list(set(res_list))
+				word_list = list(set(res_list))  # 先转为set去除重复，再转回list
 
 				self.wordlist[dirt].extend(word_list)    #将结果存进wordlist中
 				self.mail_count[dirt] += 1    #记录邮件数加一
 
-	def calc_word_freq(self, mail_type):    #计算词频
-		counter = collections.Counter(self.wordlist[mail_type])    #从字典创建Counter
+	def calc_word_freq(self, mail_type):    #计算词频，mail_type为normal和spam
+		counter = collections.Counter(self.wordlist[mail_type])    #从字典创建Counter，Counter是一个简单的计数器，例如，统计字符出现的个数
 		dic = collections.defaultdict(list)    #collections.defaultdict(list)使用起来效果和运用dict.setdefault()比较相似
 		for word in list(counter):
 			dic[word].append(counter[word])
 
-		for key in dic:
+		for key in dic:		# 将字典转换成{'1': [0.2], '3': [0.1], '2': [0.1]})的形式，'word':[概率]
 			dic[key][0] *= 1.0 / self.mail_count[mail_type]
 
 		return dic
@@ -72,8 +73,8 @@ class TrainModule:
 
 		dic_word_freq = dic_word_freq_in_normal    #dic_word_freq_in_normal存入dic_dic_word_freq
 
-		for key in dic_word_freq_in_spam:    #遍历垃圾邮件字典
-			if key not in dic_word_freq:
+		for key in dic_word_freq_in_spam:    #遍历垃圾邮件字典，key为每个词
+			if key not in dic_word_freq:  # 该词只在垃圾邮件中出现
 				dic_word_freq[key].append(self.PRE_DEFINED_WORD_FREQ)
 			dic_word_freq[key].append(dic_word_freq_in_spam[key][0])
 
@@ -81,9 +82,9 @@ class TrainModule:
 			if len(dic_word_freq[key]) == 1:
 				dic_word_freq[key].append(self.PRE_DEFINED_WORD_FREQ)
 
-		self.dic_word_freq = dic_word_freq
+		self.dic_word_freq = dic_word_freq	# 构造字典dic_word_freq的形式为{'word':[在正常邮件中出现的概率，在垃圾邮件中出现的概率]}，如果在任一中未出现则用PRE_DEFINED_WORD_FREQ代替
 
-	def write_freq_file(self):
+	def write_freq_file(self):	# 将构造好的字典写入文件保存
 		print('writing freq file...')
 
 		dic_freq = self.dic_word_freq
@@ -100,7 +101,7 @@ class TrainModule:
 
 		fp.close()
 
-	def read_freq_file(self):
+	def read_freq_file(self):	# 读取字典
 		if not os.path.isfile(self.WORD_FREQ_FILE):
 			return False
 
@@ -128,7 +129,7 @@ class TrainModule:
 			self.build_freq_dict()
 			self.write_freq_file()
 
-	def update(self, mail_type, word_list):
+	def update(self, mail_type, word_list):	#加入数据后更新模型
 		if mail_type == 'normal':
 			mt = 0
 		else:
@@ -146,9 +147,8 @@ class TrainModule:
 				(1 + self.dic_word_freq[word][mt] * self.mail_count[mail_type]) / (self.mail_count[mail_type] + 1)
 
 		self.mail_count[mail_type] += 1
-
-import sys
-
+		
+		
 def main():
 	TrainModule().set_dic_word_freq()
 
